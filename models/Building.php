@@ -3,6 +3,8 @@
 namespace app\models;
 
 use Yii;
+use nanson\postgis\behaviors\GeometryBehavior;
+use yii\db\Expression;
 
 /**
  * This is the model class for table "building".
@@ -30,10 +32,11 @@ class Building extends \yii\db\ActiveRecord
     {
         return [
             [['address', 'location'], 'required'],
-            [['location'], 'string'],
             [['address'], 'string', 'max' => 255]
         ];
     }
+
+
 
     /**
      * @inheritdoc
@@ -53,5 +56,15 @@ class Building extends \yii\db\ActiveRecord
     public function getCompanies()
     {
         return $this->hasMany(Company::className(), ['building_id' => 'id']);
+    }
+
+    public static function locationStringToGeometry($location)
+    {
+        if (preg_match('/^(\-?\d+(\.\d+)?),(\-?\d+(\.\d+)?)$/', $location, $match)) {
+
+            $location = \yii\helpers\StringHelper::explode($location, ',');
+            return new Expression('ST_SetSRID(ST_MakePoint('.$location[0].','.$location[1].'), 4326)');
+        }
+        return null;
     }
 }

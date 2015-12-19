@@ -1,12 +1,9 @@
 <div class="admin-default-index">
-    <h1><?= $this->context->action->uniqueId ?></h1>
-    <p>
-        This is the view content for action "<?= $this->context->action->id ?>".
-        The action belongs to the controller "<?= get_class($this->context) ?>"
-        in the "<?= $this->context->module->id ?>" module.
-    </p>
-    <p>
-        You may customize this page by editing the following file:<br>
-        <code><?= __FILE__ ?></code>
-    </p>
+    <h1><?= \yii\helpers\Html::encode("Admin Panel"); ?></h1>
+
+    <p><a class="btn btn-lg btn-success" href="<?= \yii\helpers\Url::to('admin/company')?>">Companies</a></p>
+    <p><a class="btn btn-lg btn-success" href="<?= \yii\helpers\Url::to('admin/companyphone')?>">Company phones</a></p>
+    <p><a class="btn btn-lg btn-success" href="<?= \yii\helpers\Url::to('admin/building')?>">Buildings</a></p>
+    <p><a class="btn btn-lg btn-success" href="<?= \yii\helpers\Url::to('admin/rubric')?>">Rubrics</a></p>
+
 </div>

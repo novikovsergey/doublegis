@@ -9,10 +9,11 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
+
 /**
  * CompanyPhoneController implements the CRUD actions for CompanyPhone model.
  */
-class CompanyPhoneController extends Controller
+class CompanyphoneController extends Controller
 {
     public function behaviors()
     {

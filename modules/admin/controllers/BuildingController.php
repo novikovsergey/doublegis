@@ -62,13 +62,18 @@ class BuildingController extends Controller
     {
         $model = new Building();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        } else {
-            return $this->render('create', [
-                'model' => $model,
-            ]);
+        if (Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post('Building');
+            $model->address = $post['address'];
+            $model->location = Building::locationStringToGeometry($post['location']);
+
+            if ($model->save()) {
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
+        return $this->render('create', [
+            'model' => $model,
+        ]);
     }
 
     /**
@@ -81,13 +86,25 @@ class BuildingController extends Controller
     {
         $model = $this->findModel($id);
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        } else {
-            return $this->render('update', [
-                'model' => $model,
-            ]);
+        if (Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post('Building');
+            $model->address = $post['address'];
+            $model->location = Building::locationStringToGeometry($post['location']);
+
+            if ($model->save()) {
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
+        return $this->render('create', [
+            'model' => $model,
+        ]);
+//        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+//            return $this->redirect(['view', 'id' => $model->id]);
+//        } else {
+//            return $this->render('update', [
+//                'model' => $model,
+//            ]);
+//        }
     }
 
     /**
@@ -112,7 +129,8 @@ class BuildingController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = Building::findOne($id)) !== null) {
+
+        if (($model = Building::find()->select(['id', 'address', "ST_X(location)||','||ST_Y(location) as location"])->where(['id' => $id])->one()) !== null) {
             return $model;
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');

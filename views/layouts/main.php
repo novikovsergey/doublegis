@@ -27,7 +27,7 @@ AppAsset::register($this);
 <div class="wrap">
     <?php
     NavBar::begin([
-        'brandLabel' => 'My Company',
+        'brandLabel' => '2GIS Interview test',
         'brandUrl' => Yii::$app->homeUrl,
         'options' => [
             'class' => 'navbar-inverse navbar-fixed-top',
@@ -52,8 +52,17 @@ AppAsset::register($this);
     ?>
 
     <div class="container">
-        <?= Breadcrumbs::widget([
+        <?=
+        //(Yii::$app->controller->module->id == 'admin')? '/admin':
+
+//        print_r($this->params['breadcrumbs']); die();
+        Breadcrumbs::widget([
             'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
+            'homeLink' => [
+                'label' => 'Home',
+                'url' => (Yii::$app->controller->module->id == 'admin')? '/admin': '/',
+                'itemprop' => 'url',
+            ],
         ]) ?>
         <?= $content ?>
     </div>

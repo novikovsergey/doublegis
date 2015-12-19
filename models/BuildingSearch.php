@@ -42,7 +42,7 @@ class BuildingSearch extends Building
     public function search($params)
     {
         $query = Building::find();
-
+        $query->select(['id', 'address', "ST_X(location)||','||ST_Y(location) as location"]);
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
