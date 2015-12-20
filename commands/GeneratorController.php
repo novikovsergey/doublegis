@@ -12,6 +12,8 @@ use yii\helpers\ArrayHelper;
 use app\models\Building;
 use app\models\Company;
 use app\models\CompanyPhone;
+use app\models\CompanyRubric;
+use app\models\Rubric;
 
 /**
  * This command echoes the first argument that you have entered.
@@ -23,100 +25,128 @@ use app\models\CompanyPhone;
  */
 class GeneratorController extends Controller
 {
-    /**
-     * @var \Faker\Generator
-     */
-    private $faker;
+	const MIN_RUBRIC_FOR_COMPANY = 1;
+	const MAX_RUBRIC_FOR_COMPANY = 3;
 
-    public function init(){
-        $this->faker =  \Faker\Factory::create('ru_RU');
-    }
-    /**
-     * This command echoes what you have entered as the message.
-     * @param string $message the message to be echoed.
-     */
-    public function actionIndex($message = 'hello world')
-    {
-        $min_length = 5;
-        $max_length = 10;
-        $count = 10;
+	/**
+	 * @var \Faker\Generator
+	 */
+	private $faker;
 
-        $alphabet = array('euioa', 'rtpsdfghklzvbnm');
-        $alphabet_length = array(mb_strlen($alphabet[0]), mb_strlen($alphabet[1]));
-        $result = array();
+	public function init()
+	{
+		$this->faker = \Faker\Factory::create('ru_RU');
+	}
 
-        for ($j = 0; $j < $count; ++$j) {
-            $word_length = mt_rand($min_length, $max_length);
-            $word = '';
-            $char_type = 0;
-            for ($i = 0; $i < $word_length; ++$i) {
-                if ($char_type === 0) $char_type = 1;
-                else $char_type = mt_rand(0, 1);
+	public function actionGenerate()
+	{
+		$this->contructBuildings();
+		$this->openCompanies(1000);
+		$this->providePhones();
+		$this->createRubrics();
+		$this->distributeRubrics();
+	}
 
-                do {
-                    $s = $alphabet[$char_type][mt_rand(0, $alphabet_length[$char_type] - 1)];
-                } while ($i != 0 && $s == $word[mb_strlen($word) - 1]);
-                $word .= $s;
-            }
-            $result[] = $word;
-        }
+	private function contructBuildings($count = 100)
+	{
 
-        print_r($result);
-    }
+		print_r("Construct buildings. Count: " . $count ."...");
+		for ($i = 0; $i < $count; $i++) {
+			$building = new Building();
 
-    public function actionGenerate(){
-        $this->contructBuildings();
-        $this->openCompanies();
-        $this->providePhones();
-    }
+			$building->address = $this->faker->address;
+			$building->location = Building::getPostgisFormatByCoordinate($this->faker->longitude, $this->faker->latitude);
 
-    private function contructBuildings($count = 100){
-        for($i =0; $i < $count; $i++) {
-            $building = new Building();
+			$building->save();
 
-            $building->address = $this->faker->address;
-            $building->location = Building::getPostgisFormatByCoordinate($this->faker->longitude, $this->faker->latitude);
+		}
+		print_r("DONE". PHP_EOL);
 
-            $building->save();
+	}
 
-            print_r($i.PHP_EOL);
-        }
-    }
+	private function openCompanies($count = 100)
+	{
+		print_r("Open companies. Count: " . $count ."...");
+		$buildings = Building::find()->asArray()->all();
+		$building_ids = ArrayHelper::getColumn($buildings, 'id');
 
-    private function openCompanies($count = 100){
-        $buildings = Building::find()->asArray()->all();
-        $building_ids = ArrayHelper::getColumn($buildings, 'id');
+		$building_ids_length = count($building_ids) - 1;
+		for ($i = 0; $i < $count; $i++) {
+			$company = new Company();
+			$company->title = $this->faker->unique()->company;
+			$company->building_id = $building_ids[mt_rand(1, $building_ids_length)];
 
-        $building_ids_length = count($building_ids) - 1;
-        for($i =0; $i < $count; $i++) {
-            $company = new Company();
-            $company->title =  $this->faker->company;
-            $company->building_id = $building_ids[mt_rand(1, $building_ids_length)];
+			$company->save();
+		}
+		print_r("DONE". PHP_EOL);
+	}
 
-            $company->save();
-            print_r($i.PHP_EOL);
-        }
-    }
+	private function providePhones($count = 150)
+	{
+		print_r("Provide phones. Count: " . $count ."...");
+		$companies = Company::find()->asArray()->all();
+		$company_ids = ArrayHelper::getColumn($companies, 'id');
 
-    private function providePhones($count = 150){
-        $companies = Company::find()->asArray()->all();
-        $company_ids = ArrayHelper::getColumn($companies, 'id');
+		$company_ids_length = count($company_ids) - 1;
 
-        $company_ids_length =  count($company_ids) - 1;
+		for ($i = 0; $i < $count; $i++) {
+			$company_phone = new CompanyPhone();
+			$company_phone->phone = $this->faker->unique()->phoneNumber;
+			$company_phone->company_id = $company_ids[mt_rand(1, $company_ids_length)];
 
-        for($i =0; $i < $count; $i++) {
-        $company_phone = new CompanyPhone();
-            $company_phone->phone = $this->faker->unique()->phoneNumber;
-            $company_phone->company_id = $company_ids[mt_rand(1, $company_ids_length)];
+			$company_phone->save();
 
-            $company_phone->save();
-            print_r($i.PHP_EOL);
-        }
-    }
+		}
 
-    private function createRubrics(){
+		print_r("DONE". PHP_EOL);
+	}
 
-    }
+	private function createRubrics($count = 50)
+	{
+		print_r("Create rubrics. Count: " . $count ."...");
+		for ($i = 1; $i <= $count; $i++) {
+			$rubric = new Rubric();
+			$rubric->title = $this->faker->unique()->word;
+			if ($i === 1) {
+				$parent_id = NULL;
+			} else {
+				do {
+					$parent_id = $this->faker->optional(0.7)->numberBetween(1, $i);
+				} while ($parent_id === $i);
+			}
+			$rubric->parent_id = $parent_id;
+
+			$rubric->save();
+
+		}
+		print_r("DONE". PHP_EOL);
+	}
+	/** @todo Послу уточннеия задания модифицировать метод  */
+	private function distributeRubrics()
+	{
+
+		print_r("Distribute rubrics for company...");
+
+		$companies = Company::find()->all();
+		$rubrics = Rubric::find()->asArray()->all();
+		$rubrics_ids = ArrayHelper::getColumn($rubrics, 'id');
+		$rubrics_ids_count = count($rubrics_ids);
+
+		foreach ($companies as $company) {
+			$this->faker->unique(true);
+			$rubric_for_company_count = $this->faker->numberBetween(self::MIN_RUBRIC_FOR_COMPANY, self::MAX_RUBRIC_FOR_COMPANY);
+			for ($i = 1; $i <= $rubric_for_company_count; $i++) {
+
+
+				$company_rubric = new CompanyRubric();
+				$company_rubric->company_id = $company->id;
+				$company_rubric->rubric_id = $rubrics_ids[$this->faker->unique()->numberBetween(0, $rubrics_ids_count - 1)];
+				$company_rubric->save();
+			}
+
+		}
+		print_r("DONE" . PHP_EOL);
+	}
 
 
 }
