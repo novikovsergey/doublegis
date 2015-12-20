@@ -48,6 +48,10 @@ class m151219_084700_create_tables extends Migration
         $this->addForeignKey('company_rubric_company_foreign_idx', 'company_rubric', 'company_id', 'company', 'id', 'CASCADE', 'CASCADE');
         $this->execute('CREATE INDEX building_location_idx ON building USING GIST(location)');
 
+        $this->createIndex('company_phone_company_id_idx','company_phone', 'company_id');
+        $this->createIndex('company_rubric_rubric_id_idx','company_rubric', 'rubric_id');
+        $this->createIndex('company_rubric_company_id_idx','company_rubric', 'company_id');
+        $this->createIndex('rubric_parent_id_idx','rubric', 'parent_id');
     }
 
     public function safeDown()    {

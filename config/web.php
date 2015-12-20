@@ -49,7 +49,8 @@ $config = [
                 '<module(admin)>/<controller:\w+>/<action:\w+>/<id:\d+>' => '<module>/<controller>/<action>',
                 '<module(admin)>/<controller:\w+>/<action:\w+>' => '<module>/<controller>/<action>',
                 'buildings' => 'main/buildings',
-                'companies' => 'main/companies'
+                'companies' => 'main/companies',
+                'rubrics' => 'main/rubrics'
             ],
         ],
 

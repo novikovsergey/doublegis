@@ -42,7 +42,7 @@ class GeneratorController extends Controller
 	{
 		$this->contructBuildings();
 		$this->openCompanies(1000);
-		$this->providePhones();
+		$this->providePhones(3000);
 		$this->createRubrics();
 		$this->distributeRubrics();
 	}

@@ -3,7 +3,6 @@
 namespace app\models;
 
 use Yii;
-use nanson\postgis\behaviors\GeometryBehavior;
 use yii\db\Expression;
 
 /**
@@ -63,7 +62,6 @@ class Building extends \yii\db\ActiveRecord
         if (preg_match('/^(\-?\d+(\.\d+)?),(\-?\d+(\.\d+)?)$/', $location, $match)) {
 
             $location = \yii\helpers\StringHelper::explode($location, ',');
-//            return new Expression('ST_SetSRID(ST_MakePoint('.$location[0].','.$location[1].'), 4326)');
             return self::getPostgisFormatByCoordinate($location[0], $location[1]);
         }
         return null;
