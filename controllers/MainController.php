@@ -3,7 +3,9 @@
 namespace app\controllers;
 
 use app\models\Building;
+use app\models\CompanyPhone;
 use Faker\Provider\fr_BE\Company;
+use yii\helpers\ArrayHelper;
 use yii\helpers\StringHelper;
 
 class MainController extends \yii\web\Controller
@@ -23,7 +25,7 @@ class MainController extends \yii\web\Controller
 	public function actionCompanies()
 	{
 		$query = new \yii\db\Query;
-		$query->select(['company.id', 'company.title'])
+		$query->select(['company.id', 'company.title', 'building.address'])
 				->from('company')
 				->join('INNER JOIN', 'building', 'company.building_id = building.id');
 
@@ -35,15 +37,25 @@ class MainController extends \yii\web\Controller
 //		$company_ids = $this->getIds('ids');
 
 		$get_radius = \Yii::$app->request->get('radius');
+		$get_envelope = \Yii::$app->request->get('envelope');
 
-		if($get_radius) {
+			if($get_radius && !$get_envelope) {
 			$location = StringHelper::explode($get_radius, ',');
 			$query->andWhere("ST_DWithin(building.location, (ST_SetSRID(ST_MakePoint(".$location[0].",".$location[1]."), 4326)), ".$location[2].")");
 		}
+
+		if($get_envelope && !$get_radius) {
+			$location = StringHelper::explode($get_envelope, ',');
+			$query->andWhere("location && ST_MakeEnvelope(".$location[0].", ".$location[1].", ".$location[2].", ".$location[3].", 4326)");
+		}
 //		$get_search_query =\Yii::$app->request->get('q');
 
-		$response = $query->createCommand()->queryAll();
-		return $response;
+		$companies = $query->createCommand()->queryAll();
+
+		foreach($companies as $key => $company) {
+			$companies[$key]['phones'] = ArrayHelper::getColumn(CompanyPhone::find()->asArray()->where(["company_id" => $company["id"]])->all(), 'phone');
+		}
+		return $companies;
 
 	}
 
