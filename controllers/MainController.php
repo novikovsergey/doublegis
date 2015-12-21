@@ -8,6 +8,7 @@ use app\models\CompanyRubric;
 use app\models\Rubric;
 use yii\helpers\ArrayHelper;
 use yii\helpers\StringHelper;
+use \yii\helpers\VarDumper;
 
 class MainController extends \yii\web\Controller
 {
@@ -38,7 +39,7 @@ class MainController extends \yii\web\Controller
 
 		$this->filterGeometry($query);
 
-		$this->titleSerach($query);
+		$this->titleSearch($query);
 
 		$query->orderBy('id');
 		$query->limit(1000);
@@ -78,6 +79,8 @@ class MainController extends \yii\web\Controller
 	{
 		$rubric_ids = $this->getIds('rubric_ids');
 		if ($rubric_ids) {
+			$rubrics = Rubric::findRecursive($rubric_ids, 'down');
+			$rubric_ids = array_merge($rubric_ids, ArrayHelper::getColumn($rubrics,'id'));
 			$sub_query = CompanyRubric::find()->select('company_rubric.company_id')->where(['company_rubric.rubric_id' => $rubric_ids]);
 			$query->andWhere(['in', 'company.id', $sub_query]);
 		}
@@ -130,7 +133,7 @@ class MainController extends \yii\web\Controller
 		}
 	}
 
-	private function titleSerach(\yii\db\Query $query)
+	private function titleSearch(\yii\db\Query $query)
 	{
 		$get_search_query = \Yii::$app->request->getQueryParam('q');
 		if ($get_search_query) {
@@ -142,7 +145,9 @@ class MainController extends \yii\web\Controller
 	{
 		$rubric_ids = $this->getIds('ids');
 		$rubrics = Rubric::findRecursive($rubric_ids);
-		$rubrics = Rubric::buildTree($rubrics);
+		if(!empty($rubrics)) {
+			$rubrics = Rubric::buildTree($rubrics);
+		}
 		return $rubrics;
 	}
 

@@ -64,27 +64,31 @@ class Rubric extends \yii\db\ActiveRecord
         return $this->hasMany(Company::className(), ['id' => 'company_id'])->viaTable('company_rubric', ['rubric_id' => 'id']);
     }
 
-    public static function findRecursive($children_ids)
+    public static function findRecursive($children_ids, $direct = 'up', $only_leaf = false)
     {
 
-        $placeholders = (!empty($children_ids)) ?str_repeat('?,', count($children_ids) - 1) . '?' : false;
+        $placeholders = (!empty($children_ids))? str_repeat('?,', count($children_ids) - 1) . '?' : false;
+
+        $first_param = ($direct === 'up')? 'id' : 'parent_id';
+        $second_param = ($direct === 'up')? 'parent_id' : 'id';
 
         $sql = 'WITH RECURSIVE tree AS (
                     SELECT
                     *,
                     0 AS level
                     FROM rubric'
-                    .(($placeholders) ? ' WHERE id IN (' . $placeholders . ')' : '')
+                    .(($placeholders) ? ' WHERE '.$first_param.' IN (' . $placeholders . ')' : '')
                     .' UNION
                     SELECT
                       parent.*,
                       child.level + 1 AS level
                     FROM rubric AS parent
-                      JOIN tree AS child ON child.parent_id = parent.id
+                    JOIN tree AS child ON child.'.$second_param.' = parent.'.$first_param.'
                 )
-               SELECT DISTINCT id, title, parent_id
-               FROM tree
-               ORDER BY id ASC;';
+               SELECT DISTINCT t.id, t.title, t.parent_id '
+	            .' FROM tree as t'
+               .(($only_leaf)? ' LEFT OUTER JOIN tree AS r ON t.id = r.parent_id WHERE r.parent_id  IS NULL' : '' )
+               .' ORDER BY id ASC;';
 
         $query = new \yii\db\Query;
         $command = $query->createCommand()->setSql($sql);
@@ -95,15 +99,15 @@ class Rubric extends \yii\db\ActiveRecord
             }
         }
         $rubric = $command->queryAll();
-
+//        var_export($sql); die();
         return $rubric;
     }
 
-    public static function buildTree(array $rubrics, $parent_id = 0)
+    public static function buildTree(array &$rubrics, $parent_id = NULL)
     {
-        $branch = array();
+        $branch = [];
 
-        foreach ($rubrics as $rubric) {
+        foreach ($rubrics as &$rubric) {
             if ($rubric['parent_id'] == $parent_id) {
                 $children = self::buildTree($rubrics, $rubric['id']);
                 if ($children) {
@@ -115,6 +119,7 @@ class Rubric extends \yii\db\ActiveRecord
                     'parent_id' => $rubric['parent_id'],
                     'subrubrics' => isset($rubric['subrubrics'])? $rubric['subrubrics'] : []
                 ];
+	            unset($rubric);
             }
         }
         return $branch;

@@ -28,6 +28,11 @@ class GeneratorController extends Controller
 	const MIN_RUBRIC_FOR_COMPANY = 1;
 	const MAX_RUBRIC_FOR_COMPANY = 3;
 
+	const BUILDING_COUNT = 1000;
+	const COMPANIES_COUNT = 100000;
+	const PHONES_COUNT = 150000;
+	const RUBRICS_COUNT = 500;
+
 	/**
 	 * @var \Faker\Generator
 	 */
@@ -40,10 +45,10 @@ class GeneratorController extends Controller
 
 	public function actionGenerate()
 	{
-		$this->contructBuildings();
-		$this->openCompanies(1000);
-		$this->providePhones(3000);
-		$this->createRubrics();
+		$this->contructBuildings(self::BUILDING_COUNT);
+		$this->openCompanies(self::COMPANIES_COUNT);
+		$this->providePhones(self::PHONES_COUNT);
+		$this->createRubrics(self::RUBRICS_COUNT);
 		$this->distributeRubrics();
 	}
 
@@ -67,6 +72,8 @@ class GeneratorController extends Controller
 	private function openCompanies($count = 100)
 	{
 		print_r("Open companies. Count: " . $count ."...");
+
+		$this->faker->unique(true);
 		$buildings = Building::find()->asArray()->all();
 		$building_ids = ArrayHelper::getColumn($buildings, 'id');
 
@@ -84,6 +91,7 @@ class GeneratorController extends Controller
 	private function providePhones($count = 150)
 	{
 		print_r("Provide phones. Count: " . $count ."...");
+		$this->faker->unique(true);
 		$companies = Company::find()->asArray()->all();
 		$company_ids = ArrayHelper::getColumn($companies, 'id');
 
@@ -104,9 +112,11 @@ class GeneratorController extends Controller
 	private function createRubrics($count = 50)
 	{
 		print_r("Create rubrics. Count: " . $count ."...");
+
+		$this->faker->unique(true);
 		for ($i = 1; $i <= $count; $i++) {
 			$rubric = new Rubric();
-			$rubric->title = $this->faker->unique()->word;
+			$rubric->title = ucfirst($this->faker->word);
 			if ($i === 1) {
 				$parent_id = NULL;
 			} else {
@@ -121,14 +131,12 @@ class GeneratorController extends Controller
 		}
 		print_r("DONE". PHP_EOL);
 	}
-	/** @todo Послу уточннеия задания модифицировать метод  */
 	private function distributeRubrics()
 	{
-
 		print_r("Distribute rubrics for company...");
 
 		$companies = Company::find()->all();
-		$rubrics = Rubric::find()->asArray()->all();
+		$rubrics = Rubric::findRecursive(array(),'down',true);
 		$rubrics_ids = ArrayHelper::getColumn($rubrics, 'id');
 		$rubrics_ids_count = count($rubrics_ids);
 
@@ -136,8 +144,6 @@ class GeneratorController extends Controller
 			$this->faker->unique(true);
 			$rubric_for_company_count = $this->faker->numberBetween(self::MIN_RUBRIC_FOR_COMPANY, self::MAX_RUBRIC_FOR_COMPANY);
 			for ($i = 1; $i <= $rubric_for_company_count; $i++) {
-
-
 				$company_rubric = new CompanyRubric();
 				$company_rubric->company_id = $company->id;
 				$company_rubric->rubric_id = $rubrics_ids[$this->faker->unique()->numberBetween(0, $rubrics_ids_count - 1)];
