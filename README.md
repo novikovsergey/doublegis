@@ -20,6 +20,7 @@
 - Postgres Extension Gist
 - composer
 - git
+
 ## Установка
 ```sh
 git clone https://github.com/novikovsergey/doublegis.git
@@ -70,6 +71,7 @@ composer install
 - badcoder.ru/rubrics?ids=10,25
 
 #### Пример ответа
+
 ```json
 {
 	id: 10,
@@ -99,8 +101,11 @@ composer install
 }
 ```
 # 3. companies
+
 Метод возвращает список компаний подходящих запросу, ограничение вывода 1000 компаний
+
 #### Параметры
+
 - ids - Идентификаторы необходимых компаний перечисленные через запятую 
 - building_id - Идентификатор здания в котором находятся компании
 - rubric_ids -  Идентификаторы  перечисленные через запятую рубрик к которым относятся компании, компании  выводятся для всех наследников указанных рубрик
@@ -117,7 +122,9 @@ composer install
 - address - адресс здания в котором находится компания
 - phone - массив с телефонами компании
 - rubrics - массив обьектов рубрик
+
 #### Пример запроса
+
 - badcoder.ru/companies?ids=10,25
 - badcoder.ru/companies?rubric_ids=18
 - badcoder.ru/companies?radius=10,-5,34.5&q=Текстиль
